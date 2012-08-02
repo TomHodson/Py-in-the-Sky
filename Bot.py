@@ -5,6 +5,7 @@ from CatchSTDOut import CatchSTDOut
 sandbox_globals = {}
 sandbox_locals = {'the_answer':42}
 messagequeue = set()
+debug = False
 
 class BotSkypeinterface(object):
     def __init__(self):
@@ -12,7 +13,7 @@ class BotSkypeinterface(object):
         if not self.skype.Client.IsRunning:
             print 'You need to start skype'
             exit()
-        self.skype.FriendlyName = 'Py in the Sky'
+        self.skype.FriendlyName = 'Py-in-the-Sky'
         self.skype.RegisterEventHandler('MessageStatus', self.getmessage)
         self.skype.Attach()
         print "attached!" if self.skype.AttachmentStatus == 0 else "Couldn't attach to skype"
@@ -21,7 +22,7 @@ class BotSkypeinterface(object):
         global messagequeue
         if self.iscommand(message):
             if True:#(not messagequeue) or message not in messagequeue:
-                messagequeue.add((iscommand(message),hash(self)))
+                messagequeue.add((self.iscommand(message),message,hash(self)))
     def iscommand(self, message):
         "return the sanitised version of the text if it's a command"
         return message.Body[1:] if message.Body.startswith('>') else None
@@ -35,14 +36,15 @@ with BotSkypeinterface() as Bot:
     while True:
         if messagequeue:
             message = messagequeue.pop()
-            command = message[0].Body[1:]
+            command = message[0]
             if  command != '>exit()':
                 out = []
                 err = []
                 with CatchSTDOut(out, err):
                     exec command in sandbox_globals, sandbox_locals
-                response = err if err[1] != None else " ".join(out)
-                message.Chat.SendMessage(response)
+                response = str(err[0]) if err[0] else " ".join(out)
+                if debug: response = response + "\nInstanceId:" + str(message[2])
+                message[1].Chat.SendMessage(response)
         else:
             #print "I'm alive"
             time.sleep(0.5)

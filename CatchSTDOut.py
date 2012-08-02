@@ -12,7 +12,12 @@ class CatchSTDOut(object):
         return self
     def __exit__(self, type, value, traceback):
         sys.stdout = self.oldstdout
-        self.err = (type, value, traceback)
+        self.err.append(value)
         return True
     def __getattr__(self, name):
         return self.oldstdout.__getattr__(name)
+if __name__ == '__main__':
+    out, err = [], []
+    with CatchSTDOut(out, err):
+        print 123, 'hello'
+    assert (out, err) == (['123', ' ', 'hello', '\n'], [(None, None, None)])
