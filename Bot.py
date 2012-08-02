@@ -6,6 +6,8 @@ sandbox_globals = {}
 sandbox_locals = {'the_answer':42}
 messagequeue = set()
 debug = False
+allowed = set((name.strip() for name in open("./allowed").read().split('\n') if name))
+if debug: print "allowed: ", allowed
 
 class BotSkypeinterface(object):
     def __init__(self):
@@ -19,10 +21,9 @@ class BotSkypeinterface(object):
         print "attached!" if self.skype.AttachmentStatus == 0 else "Couldn't attach to skype"
         
     def getmessage(self, message, status):
-        global messagequeue
+        global messagequeue; global allowed
         if self.iscommand(message):
-            if True:#(not messagequeue) or message not in messagequeue:
-                messagequeue.add((self.iscommand(message),message,hash(self)))
+            messagequeue.add((self.iscommand(message),message,hash(self)))
     def iscommand(self, message):
         "return the sanitised version of the text if it's a command"
         return message.Body[1:] if message.Body.startswith('>') else None
@@ -37,14 +38,19 @@ with BotSkypeinterface() as Bot:
         if messagequeue:
             message = messagequeue.pop()
             command = message[0]
-            if  command != '>exit()':
+            if  message[1].Sender.Handle in allowed:
                 out = []
                 err = []
+                sandbox_locals['message'] = message[1]
                 with CatchSTDOut(out, err):
                     exec command in sandbox_globals, sandbox_locals
                 response = str(err[0]) if err[0] else " ".join(out)
                 if debug: response = response + "\nInstanceId:" + str(message[2])
                 message[1].Chat.SendMessage(response)
+            else:
+                message[1].Chat.SendMessage("{} ({}) not authorised".format(message[1].Sender.FullName,
+                                                                            message[1].Sender.Handle
+                                                                            ))
         else:
             #print "I'm alive"
             time.sleep(0.5)
