@@ -39,7 +39,7 @@ class DefaultCommands(BaseCommands):
 		message.Chat.SendMessage(response)
 	def utils(self, message, bot):
 		commandparts = message.Body[1:].split()
-		if message.Sender.Handle != bot.owner:
+		if message.Sender.Handle not in bot.ops:
 			deny(message)
 			return
 
@@ -56,9 +56,8 @@ class DefaultCommands(BaseCommands):
 			elif commandparts[1] == 'list':
 				message.Chat.SendMessage("These people are authorised:\n {}".format(', '.join(self.authorised)))
 
-		elif commandparts[0] == 'exit':
-			message.Chat.SendMessage("exiting")
-			exit()
+		elif commandparts[0] == 'threadcount':
+			message.Chat.SendMessage(threading.active_count())
 
 
 if __name__ == '__main__':
