@@ -56,8 +56,8 @@ class DefaultCommands(BaseCommands):
 			elif commandparts[1] == 'list':
 				message.Chat.SendMessage("These people are authorised:\n {}".format(', '.join(self.authorised)))
 
-		elif commandparts[0] == 'threadcount':
-			message.Chat.SendMessage(threading.active_count())
+		elif commandparts[0] == 'threads':
+			message.Chat.SendMessage(", ".join(t.name for t in bot.threading.enumerate()))
 
 
 if __name__ == '__main__':

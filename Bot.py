@@ -1,17 +1,16 @@
+#!/usr/bin/env python
 import Skype4Py
 debug = False
-import Queue
 import threading
-
-messagequeue = Queue.Queue()
+import time
 
 class BotSkypeinterface(object):
-    def __init__(self, commands):
+    def __init__(self, commands, threading):
         self.skype = Skype4Py.Skype(Transport='x11')
         if not self.skype.Client.IsRunning:
             print 'You need to start skype'
             exit()
-
+        self.threading = threading
         self.skype.FriendlyName = 'Py-in-the-Sky'
         self.skype.RegisterEventHandler('MessageStatus', self.getmessage)
         self.skype.Attach()
@@ -22,10 +21,14 @@ class BotSkypeinterface(object):
         
     def getmessage(self, message, status):
         "this method gets attached to skype and called whenever a message comes in"
-        global messagequeue;
         parsedmessage = self.commands.parse_message(message, self)
+        snippet = message.Body[1:21]
         if parsedmessage: #parsed message returns false if it's not a command
-            messagequeue.put(parsedmessage)
+            function, args = parsedmessage
+            t = threading.Thread(target=function, args=args, name=snippet)
+            t.start_time = time.time()
+            t.setDaemon(True)
+            t.start()
 
     def __enter__(self):
         return self
@@ -34,28 +37,12 @@ class BotSkypeinterface(object):
         self.commands.write_auth()
         del self.skype
 
-class Worker(threading.Thread):
-    def __init__(self, queue):
-        threading.Thread.__init__(self)
-        self.queue = queue
-    def run(self):
-        while True:
-            function, args = self.queue.get()
-            function(*args)
-            self.queue.task_done()
-
-
 if __name__ == '__main__':
     from Commands import DefaultCommands as Commands
-    import time
 
     with  open('./allowed', 'r+') as auth:
-        with BotSkypeinterface(Commands(auth)) as Bot:
-            workers = [Worker(messagequeue) for _ in range(3)]
-            for t in workers:
-                t.setDaemon(True)
-                t.start()
-            while True:
+        with BotSkypeinterface(Commands(auth), threading) as Bot:
+            while True: 
                 time.sleep(10)
 
                 
