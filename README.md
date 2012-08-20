@@ -27,9 +27,13 @@ Example:
 
 Commands
 ========
->(any valid python)
+>>[any valid python]
 
-<auth list : lists the contents of the allowed file
-<auth add user1 user2 : adds any number of usernames to the allowed file
-<auth remove : removes users
-<threadcount : shows the current number of threads
+><auth list
+	lists the contents of the allowed file
+><auth add user1 user2
+	adds any number of usernames to the allowed file
+><auth remove
+	removes users
+><threadcount
+	shows the current number of threads
